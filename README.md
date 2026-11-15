@@ -3,23 +3,36 @@
 [![CI](https://github.com/PegBitStudio/pegbit-witness-research/actions/workflows/ci.yml/badge.svg)](https://github.com/PegBitStudio/pegbit-witness-research/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-> **PegBit Studio · Applied AI Systems Research** (`PegBit Technologies Ltd`)  
-> Research Inquiry: [pegbitstudio.com/research#witness](https://www.pegbitstudio.com/research#witness) · Open Science Policy: [pegbitstudio.com/research/policy](https://www.pegbitstudio.com/research/policy)
+> **PegBit Studio · Flagship Research Pillar 01** (`PegBit Technologies Ltd`, Nigeria)  
+> Research Programme: [pegbitstudio.com/research#verifiable-ai](https://www.pegbitstudio.com/research#verifiable-ai) · Publications: [pegbitstudio.com/research/publications](https://www.pegbitstudio.com/research/publications)
 
-## Research Problem & Falsifiable Hypothesis
+---
 
-Standard append-only SHA-256 hash chains detect **interior tampering** (modifying or deleting an earlier record), but fail against two realistic threats in autonomous AI agent execution:
+## Preliminary Local Benchmark Results
+*(Single-run local baseline; not yet independent external cryptographic audit.)*
 
-1. **Tail-Truncation Attacks:** A compromised agent runtime drops the last $k$ malicious tool calls before the next external timestamp anchor.
-2. **Split-View (Equivocation) Attacks:** A host presents two different hash histories to two different verifiers between anchor windows.
+| Metric | Observed Result | Notes |
+| :--- | :--- | :--- |
+| **Anti-Truncation & Equivocation Tests (`pytest`)** | **4 / 4 passed** (`0.08s`) | Valid chain, interior bitflip, post-checkpoint tail truncation, split-view fork |
+| **Mean Local Sealing Overhead (`1,000` events)** | **0.0099 ms / event** | Local SHA-256 + canonical JSON sealing |
+| **Full Chain + Merkle Verification (`1,000` events)** | **8.84 ms** | Offline verification latency |
+| **Production Context** | **Live deployment** | Global Prayer Altar (Canada) |
 
-**Hypothesis:** By pairing RFC 8785 canonical JSON SHA-256 chaining and RFC 6962 Merkle batching with **monotonic external head-hash checkpoints** at tool-execution boundaries, a split-plane runtime can detect **100% of tail-truncation and equivocation faults** while keeping local per-event sealing overhead **< 5 ms** and keeping raw prompts/PII strictly off-plane.
+---
+
+## Research Problem & Threat-Model Qualification
+
+Standard append-only SHA-256 hash chains detect **interior tampering**, but fail against **tail-truncation** and **split-view equivocation** when a compromised host controls both logs and local checkpoints.
+
+**Thesis:** Pairing RFC 8785 canonical JSON SHA-256 chaining and Merkle batching with **externally witnessed Signed Tree Head (STH) checkpoints** enables offline detection of interior tampering, anchored-prefix truncation, and split-view forks (when auditors compare/gossip receipts) without exposing private prompt payloads.
+
+**Mandatory Qualification:** Cryptographic chaining + external checkpoints prove **post-capture immutability and sequence consistency** for captured events; they do *not* independently prove that original inputs were truthful or detect uncaptured side-channel actions outside the instrumented boundary.
 
 ## Quickstart
 
 ```bash
-python -m pytest -v
-python benchmarks/run_benchmark.py
+PYTHONPATH=src python -m pytest -v
+PYTHONPATH=src python benchmarks/run_benchmark.py
 ```
 
 ## Structure
